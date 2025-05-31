@@ -3,49 +3,63 @@
 
   let lastTitle = '';
 
-  // Watch for SPA navigations (pushState/replaceState/popstate)
+  // Utility: fire an event on SPA navigations
   const emitLocationChange = () => window.dispatchEvent(new Event('locationchange'));
-  const wrapHistory = (method) => {
-    const orig = history[method];
-    history[method] = function (...args) {
+  ['pushState','replaceState'].forEach(m => {
+    const orig = history[m];
+    history[m] = function(...args) {
       const ret = orig.apply(this, args);
       emitLocationChange();
       return ret;
     };
-  };
-  wrapHistory('pushState');
-  wrapHistory('replaceState');
+  });
   window.addEventListener('popstate', emitLocationChange);
 
-  // Observe <title> changes
-  const titleEl = document.querySelector('title');
-  const titleObserver = new MutationObserver(announceTitle);
-  if (titleEl) titleObserver.observe(titleEl, { childList: true });
+  // Selector for the video title element
+  const TITLE_SELECTOR = 'h1.style-scope.ytd-watch-metadata yt-formatted-string[title]';
 
-  // Also announce on each location change
-  window.addEventListener('locationchange', announceTitle);
+  // Observe title element changes and initial insert
+  const watchForTitle = () => {
+    console.log(`watchForTitle()`);
+    const el = document.querySelector(TITLE_SELECTOR);
+    if (!el) return;
 
-  // Initial announcement
-  announceTitle();
+    console.log(`announceTitle: el="${el}"`);
 
-  function announceTitle() {
-    console.log('announceTitle()');
-    const full = document.title;
-    console.log(`announceTitle: full="${full}"`);
-    const title = full.replace(/ - YouTube$/, '').trim();
-    console.log(`announceTitle: title-"${title}"`);
-    if (title && title !== lastTitle) {
-      lastTitle = title;
-      speak(title);
-    }
-  }
+    // Speak whenever its `title` attribute or text changes
+    const announce = () => {
+    console.log('accounce()');
+      const t = el.getAttribute('title')?.trim() || el.textContent.trim();
+      console.log(`announce(): t="${t}" lastTitle="${lastTitle}"`);
+      if (t && t !== lastTitle) {
+        lastTitle = t;
+        speak(t);
+      }
+    };
 
-  function speak(text) {
+    // MutationObserver for dynamics
+    const mo = new MutationObserver(announce);
+    mo.observe(el, { attributes: true, childList: true, subtree: true });
+
+    // Initial announce
+    announce();
+  };
+
+  // Re-run when SPA nav fires
+  window.addEventListener('locationchange', () => {
+    lastTitle = '';        // reset so same title will re-announce if revisited
+    // slight delay to allow new DOM to load
+    setTimeout(watchForTitle, 500);
+  });
+
+  // Kick off on first load
+  watchForTitle();
+
+function speak(text) {
     console.log(`speak("${text}")`);
     if (!('speechSynthesis' in window)) return;
-    const u = new SpeechSynthesisUtterance(text);
-    // optional: u.lang = 'en-US';
-    window.speechSynthesis.cancel(); // stop any in-progress speech
-    window.speechSynthesis.speak(u);
+    const utter = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
   }
 })();
