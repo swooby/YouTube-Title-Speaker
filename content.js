@@ -1,7 +1,7 @@
-(() => {
-  console.log('YouTube Title Announcer content script loaded');
+function observeDynamicContent() {
+  console.log('YouTube-Title-Speaker content script loaded');
 
-  let lastTitle = '';
+  let lastTitle = undefined;
 
   // Utility: fire an event on SPA navigations
   const emitLocationChange = () => window.dispatchEvent(new Event('locationchange'));
