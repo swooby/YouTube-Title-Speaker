@@ -18,40 +18,41 @@ function observeDynamicContent() {
   window.addEventListener('popstate', emitLocationChange);
 
   function initYouTubeWatcher() {
-    console.log(`initYouTubeWatcher()`);
+    console.log(`${TAG}: initYouTubeWatcher()`);
     const selector = '#below > ytd-watch-metadata';
     const container = document.querySelector(selector);
-    //console.log(`initYouTubeWatcher: container="${container}"`);
+    //console.log(`${TAG}: initYouTubeWatcher: container="${container}"`);
     if (container) {
       watchYoutube(container);
     }
   }
 
   function watchYoutube(container) {
-    console.log(`watchYoutube(container=${container})`);
+    console.log(`${TAG}: watchYoutube(container=${container})`);
     // Speak whenever its `title` attribute or text changes
     const announce = () => {
-      console.log('announce()');
+      console.log(`${TAG}: announce()`);
       const artistFull = container.querySelector('#owner > ytd-video-owner-renderer > #upload-info > ytd-channel-name > #container > #text-container > #text > a')?.textContent.trim();
       const titleFull = container.querySelector('#title > h1 > yt-formatted-string').textContent.trim();
-      //console.log(`announce: artistFull="${artistFull}", titleFull="${titleFull}"`);
+      //console.log(`${TAG}: announce: artistFull="${artistFull}", titleFull="${titleFull}"`);
       if (!(artistFull && titleFull)) return;
       const artist = artistFull.match(/^(.*?) - (.+)$/)?.[1] || artistFull;
       const titleMatches = titleFull.match(/^(.*?) - (.+)$/);
-      //console.log(`announce: matches=${titleMatches}`);
+      //console.log(`${TAG}: announce: matches=${titleMatches}`);
       const title = titleMatches?.[1] || titleFull;
-      //console.log(`announce: title="${title}"`);
-      const extras = titleMatches?.[2] || '';
+      //console.log(`${TAG}: announce: title="${title}"`);
+      const extras = '';//titleMatches?.[2] || '';
       const thisTitle = `${title}, by ${artist}` + (extras ? `; ${extras}` : '');
-      console.log(`announce: thisTitle="${thisTitle}" lastTitle="${lastTitle}"`);
+      console.log(`${TAG}: announce: thisTitle="${thisTitle}" lastTitle="${lastTitle}"`);
       if (thisTitle !== lastTitle) {
         let text = '';
         if (lastTitle) {
+          lastTitle = lastTitle.match(/^(.*?)(; .+)?$/)?.[1] || lastTitle;
           text = `That was ${lastTitle}; `;
         }
         text += `Now playing: ${thisTitle}`;
         lastTitle = thisTitle;
-        speak(text, true);
+        speak(text, null, true);
       }
     };
 
