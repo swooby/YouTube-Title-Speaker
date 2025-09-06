@@ -65,48 +65,53 @@ function observeDynamicContent() {
       //subtree: true
     });
 
-    announce();  // initial announce once playback starts
+    announce();  // initial announce
   }
 
   function onNav() {
-    console.log('onNav()');
-    //lastTitle = undefined; // reset so same title will re-announce if revisited
+    console.log(`${TAG}: onNav()`);
+    lastTitle = undefined; // reset so same title will re-announce if revisited
     // slight delay to allow new DOM to load
-    //setTimeout(initYouTubeWatcher, 500);
-    initYouTubeWatcher();
+    setTimeout(initYouTubeWatcher, 500);
+    //initYouTubeWatcher();
   }
 
   // Re-run when SPA nav fires
   window.addEventListener('locationchange', onNav);
 
-  initYouTubeWatcher(); // Kick off on first load
+  // Kick off on first load
+  setTimeout(initYouTubeWatcher, 500);
+  //initYouTubeWatcher();
 
-  function speak(text, clear) {
+  //setTimeout(speakVoices, 100); // announce available voices on first load
+
+  function speak(text, voice, clear) {
     const speechSynthesis = window.speechSynthesis;
     if (!speechSynthesis) {
-      console.warn('Speech synthesis not supported in this browser');
+      console.warn(`${TAG}: Speech synthesis not supported in this browser`);
       return;
     }
-
-    console.log(`speak("${text}", clear=${clear})`);
-
-    const desiredVoiceName = 'Daniel (English (United Kingdom))'; // or any other voice you prefer
-
     const voices = speechSynthesis.getVoices();
     //console.log(`voices: ${voices.map(v => v.name).join(', ')}`);
     if (voices.length === 0) {
       // voices aren’t ready yet; delay until they fire
-      speechSynthesis.onvoiceschanged = () => speak(text);
+      speechSynthesis.onvoiceschanged = () => speak(text, voice, clear);
       return;
     }
-    const voice = voices.find(v => {
-      //console.log(`Checking voice: "${v.name}"`);
-      return v.name === desiredVoiceName;
-    });
-    console.log(`Using voice: ${voice.name}`);
+
+    console.log(`${TAG}: speak("${text}", voice="${voice}", clear=${clear})`);
+
+    if (!voice) {
+      const desiredVoiceName = 'Daniel (English (United Kingdom))'; // or any other voice you prefer
+      voice = voices.find(v => {
+        //console.log(`Checking voice: "${v.name}"`);
+        return v.name === desiredVoiceName;
+      });
+    }
+    console.log(`${TAG}: Using voice: ${voice.name}`);
 
     const utter = new SpeechSynthesisUtterance(text);
-    utter.voice = voice;
+    utter.voice = voice;  // use specific voice
     utter.lang = 'en-US'; // set language if needed
     utter.volume = 1;     // set volume if needed
     utter.rate = 1;       // set rate if needed
