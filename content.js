@@ -1,5 +1,7 @@
+const TAG = 'YouTube-Title-Speaker';
+
 function observeDynamicContent() {
-  console.log('YouTube-Title-Speaker content script loaded');
+  console.log(`${TAG}: observeDynamicContent()`);
 
   let lastTitle = undefined;
 
